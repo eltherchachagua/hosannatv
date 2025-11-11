@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Transmisión en Vivo</title>
+  <style>
+    html,body{height:100%;margin:0;background:#000;overflow:hidden}
+    video{width:100%;height:100%;object-fit:cover;background:#000}
+    .overlay-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;pointer-events:none}
+    .big-play{pointer-events:auto;background:rgba(0,0,0,.5);padding:20px;border-radius:999px;border:2px solid rgba(255,255,255,.15);font-size:22px;color:#fff;cursor:pointer}
+  </style>
+</head>
+<body>
+  <video id="player" playsinline controls></video>
+
+  <div class="overlay-play" id="overlay">
+    <button class="big-play" id="bigPlay">▶</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.4.2/dist/hls.min.js"></script>
+  <script>
+    const player = document.getElementById('player');
+    const overlay = document.getElementById('overlay');
+    const bigPlay = document.getElementById('bigPlay');
+
+    // 🔹 Agrega tu enlace de transmisión en la siguiente línea:
+    const streamURL = 'https://vs20.live.opencaster.com/hosanna_0b56e061/index.m3u8'; // ← reemplaza esta línea con tu URL
+
+    async function enterFullscreen() {
+      try {
+        if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+        else if (document.documentElement.webkitRequestFullscreen) document.documentElement.webkitRequestFullscreen();
+      } catch (e) {
+        console.warn('No se pudo entrar en pantalla completa:', e);
+      }
+    }
+
+    function attachStream(url) {
+      if (window._hls) { try { window._hls.destroy(); } catch(e){} window._hls = null; }
+      if (url && url.endsWith('.m3u8') && window.Hls && !player.canPlayType('application/vnd.apple.mpegurl')) {
+        const hls = new Hls();
+        window._hls = hls;
+        hls.loadSource(url);
+        hls.attachMedia(player);
+      } else {
+        player.src = url;
+      }
+    }
+
+    async function tryPlay() {
+      try {
+        await player.play();
+        overlay.style.display = 'none';
+      } catch (err) {
+        overlay.style.display = 'flex';
+        console.warn('Autoplay bloqueado o falló:', err);
+      }
+    }
+
+    bigPlay.addEventListener('click', async () => {
+      try {
+        await player.play();
+        overlay.style.display = 'none';
+      } catch (e) {
+        alert('No se pudo reproducir la transmisión.');
+      }
+    });
+
+    // Cargar automáticamente al abrir la página
+    window.addEventListener('load', async () => {
+      attachStream(streamURL);
+      await enterFullscreen();
+      await tryPlay();
+    });
+  </script>
+</body>
+</html>
